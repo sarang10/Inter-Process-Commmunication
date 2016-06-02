@@ -1,0 +1,39 @@
+//A Program To accept a decimal Number from Message queue and convert it into binary and pass it to the queue again.
+
+#include<iostream>
+#include<sys/ipc.h>
+#include<sys/msg.h>
+#include<unistd.h>
+#include<string.h>
+using namespace std;
+struct msg1{
+	long mtype;						// The field mtype is used later when retrieving messages from the queue, and can be set to any
+	char a[100];						   positive number.a[100] will store the converted binary number and will be sent to queue.
+	
+}m1;
+struct msg2{
+	long mtype;
+	int temp;
+}m2;
+int main()
+{
+	int i;
+	key_t key;
+	key = ftok("/home/sarang/oslab/clientmsg.cpp",'S');	// To generate a unique key with path of file and any integer value as argument.
+	int id = msgget(key, 0666 | IPC_CREAT);			// Returns the ID of unique nessage queue generated with the help of key or -1 on failure.
+	msgrcv(id, &m2, sizeof(m2.temp), 1, 0);			// Recieve message from mesasge queue by passing the id of the queue,pointer to the area to store the 
+								    recieved data and size of data recieved.
+	int m = m2.temp;
+	i=0;
+	while(m!=0)						// Convert the recieved decimal to binary.
+	{
+		if(m%2==0)
+		m1.a[i] ='0';
+		else m1.a[i] = '1';
+		m=m>>1;
+		i++;
+	}
+	m1.mtype = 2;
+	msgsnd(id, &m1, sizeof(m1.a), 0);			// Send binary number to message queue.
+	return 0;
+}

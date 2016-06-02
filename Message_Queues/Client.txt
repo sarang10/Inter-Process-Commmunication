@@ -1,0 +1,47 @@
+// A Program to take a decimal number as input and pass it to message queue and accept the binary number back from message queue to print it.
+
+#include<iostream>
+#include<sys/ipc.h>
+#include<sys/msg.h>
+#include<unistd.h>
+#include<string.h>
+#include<sys/types.h>
+#include<unistd.h>
+#include<stdio.h>
+using namespace std;
+struct msg1{						      // The field mtype is used later when retrieving messages from the queue, and can be set to any
+	long mtype;						 positive number.a[100] will store the converted binary number and will be sent to queue.
+	char a[100];
+}m1;
+struct msg2{
+	long mtype;
+	int temp;
+}m2;
+int main()
+{
+	int n,i,z;
+	key_t key;
+	cout<<"Enter the data you want to convert to binary!\n";
+	cin>>n;
+
+	m2.mtype = 1;
+	m2.temp=n;
+	key = ftok("/home/sarang/oslab/clientmsg.cpp",'S');   // To generate a unique key with path of file and any integer value as argument.
+	int id = msgget(key, 0666 | IPC_CREAT);               // Returns the ID of unique nessage queue generated with the help of key or -1 on failure.
+	msgsnd(id, &m2, sizeof(m2.temp), 0);                  // Send message to mesasge queue by passing the id of the queue,pointer to the data to be sent and size of data.
+	z = fork();					      // Fork a child.
+	if(z==0)
+	{
+		execl("./servers","SARANG",NULL);	      // Execute the Server Process 
+	}
+	else {
+		msgrcv(id, &m1, sizeof(m1.a), 2, 0);		      // Recieve the binary number converted by the Server Process.
+		cout<<"The number in binary is:\n";
+		int len = strlen(m1.a);
+		for(i=len-1;i>=0;i--)
+			cout<<m1.a[i];
+		cout<<"\n";
+		msgctl(id,IPC_RMID,NULL);			      // Remove the message queue by freeing all thhe allocated area.
+	}
+	return 0;
+}

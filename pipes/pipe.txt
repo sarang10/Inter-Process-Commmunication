@@ -1,0 +1,45 @@
+// Establish communication between child and parent with the help of pipes.
+
+#include<stdio.h>
+#include<sys/types.h>
+#include<unistd.h>
+#include<string.h>
+#include<stdlib.h>
+int main()
+{
+	int p1[2],p2[2],n;
+	char *s1="Hello! I Want to Exit!";
+	char *s3="Here I Exit!";
+	char *s2="You may Exit!";				/* File descriptors are simply ints that are analogous to FILE*'s in stdio.h.
+	char s4[20],s5[20],s6[20];				   For example, stdin is file descriptor “0”, stdout is “1”, and stderr is “2”. Likewise, any files
+	pipe(p1);						   you open using fopen() get their own file descriptor, although this detail is hidden from you.
+	pipe(p2);						   A call to the pipe() function returns a pair of file descriptors. One of these descriptors
+	n=fork();						   is connected to the write end of the pipe, and the other is connected to the read end. Anything
+	if(n==0)						   can be written to the pipe, and read from the other end in the order it came in.
+	{							   pipe() takes an array of two ints as an argument. Assuming no errors, it connects
+		close(p2[0]);				 	   two file descriptors and returns them in the array. The first element of the array is the
+ 		printf("Writing from Child : %s\n",s1);		   reading-end of the pipe, the second is the writing end. */
+		write(p2[1],s1,strlen(s1));
+		close(p1[1]);
+		read(p1[0],s5,strlen(s2));			 /* read() and write() are used to read from and write into the pipe.First argument of read() specifies
+								   from which end data is being read,the data in which it is stored and its size.
+		printf("Reading from Child : %s\n",s5);		    
+		close(p2[0]);
+		printf("Writng from Child : %s\n",s3);
+		write(p2[1],s3,strlen(s3));			 /* write() specifies from which end data is being written and data to be sent and its size. 
+		exit(0);
+	}
+	else {
+		close(p2[1]);
+		read(p2[0],s4,strlen(s1));
+		printf("Reading from Parent : %s\n",s4);
+		close(p1[0]);
+		printf("Writng from Parent : %s\n",s2);
+		write(p1[1],s2,strlen(s2));
+		close(p2[1]);
+		read(p2[0],s6,strlen(s3));
+		close(p2[0]);
+		printf("Reading from Parent : %s\n",s6);
+	}
+	return 0;
+}
