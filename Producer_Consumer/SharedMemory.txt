@@ -1,0 +1,104 @@
+// A Program to implement Producer Consumer Problem using Shared memory and Semaphores.
+
+#include<stdio.h>
+#include<iostream>
+#include<stdlib.h>
+#include<sys/types.h>
+#include<sys/ipc.h>
+#include<sys/shm.h>
+#include<unistd.h>
+#include<sys/sem.h>
+#define BUFSIZE 1
+using namespace std ;
+int *buffer ;
+int nextp=0, nextc=0 ;
+int mutex, full, empty ;
+void producer(int N)
+{
+	int data ;
+	if( nextp == N )
+	nextp=0 ;
+	cout<<"Enter the data\n";
+	scanf( "%d", ( buffer+nextp ) ) ;
+	nextp++ ;
+}
+void consumer(int N)
+{
+	int g ;
+	if( nextc == N )
+	nextc=0 ;
+	g=*( buffer+nextc++ ) ;
+	printf( "Consumer Consumes the data: %d\n", g ) ;
+}
+void sem_op( int id, int value ) {
+	struct sembuf op ;
+	int v ;
+	op.sem_num=0 ;
+	op.sem_op=value ;
+	op.sem_flg=SEM_UNDO ;
+	v=semop( id, &op, 1 ) ;
+}
+void sem_create( int semid, int initval )
+{
+	int semval ;
+	union semun {
+		int val ;
+		struct semid_ds *buf ;
+		unsigned short *array ;
+	}s ;
+	s.val=initval ;
+	semval=semctl( semid, 0, SETVAL, s ) ;
+}
+void sem_wait( int id )
+{
+	int value = -1 ;
+	sem_op( id, value ) ;
+}
+void sem_signal( int id )
+{
+	int value=1 ;
+	sem_op( id, value ) ;
+}
+int main( )
+{
+	int shmid, no=1, i ;
+	int pid, n, num ;
+	cout<<"Enter the Maximum Number of Products produced by the Producer\n";
+	cin>>num ;
+	shmid=shmget( 1000, BUFSIZE, IPC_CREAT | 0666 );
+	buffer=( int* )shmat( shmid, ( char* )0, 0 ) ;
+	mutex=semget( IPC_PRIVATE, 1, 0666 | IPC_CREAT ) ;
+	empty=semget( IPC_PRIVATE, 1, 0666 | IPC_CREAT ) ;
+	full=semget( IPC_PRIVATE, 1, 0666 | IPC_CREAT ) ;
+	sem_create( mutex, 1 ) ;
+	sem_create( empty, num) ;
+	sem_create( full, 0 ) ;
+	pid=fork( ) ;
+	if( pid > 0 )
+	{
+		for( i=0 ;i<num ;i++ )
+		{
+			sem_wait( empty ) ;
+			sem_wait( mutex ) ;
+			printf( "Producer Ready to Execute\n" ) ;
+			producer(num) ;
+			sem_signal( mutex ) ;
+			sem_signal( full ) ;
+			wait( ) ;
+		}
+	}
+	if( pid == 0 )
+	{
+		wait();
+		for( i=0 ;i<num ;i++ )
+		{
+			sem_wait( full ) ;
+			sem_wait( mutex ) ;
+			printf( "Consumer Ready to Execute\n" ) ;
+			consumer(num) ;
+			sem_signal( mutex ) ;
+			sem_signal( empty ) ;
+		}
+	}
+	return 0 ;
+}
