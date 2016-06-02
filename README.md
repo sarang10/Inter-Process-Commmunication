@@ -1,12 +1,12 @@
 # Inter-Process-Commmunication
 Linux supports a number of Inter-Process Communication (IPC) mechanisms so that processes communicate with each other and with the kernel to coordinate their activities.
 The IPC mechanisms can be classified into the following categories as given below:
-Pipes
-Fifos
-Shared memory
-Mapped memory
-Message queues
-Sockets
+1. Pipes
+2. Fifos
+3. Shared memory
+4. Mapped memory
+5. Message queues
+6. Sockets
 
 PIPES : A pipe is a communication device that permits unidirectional communication i.e they are half-duplex. Data written to the “write end” of the pipe is read back from the “read end.” Pipes are serial devices; the data is always read from the pipe in the same order it was written.Typically, a pipe is used to communicate between two threads in a single process or between parent and child processes.
 A call to the pipe() function returns a pair of file descriptors. One of these descriptors is connected to the write end of the pipe, and the other is connected to the read end. Anything can be written to the pipe, and read from the other end in the order it came in.
